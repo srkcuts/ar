@@ -1,56 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>AR Photo Gallery</title>
+  <meta charset="utf-8" />
+  <title>AR Photo Scanner</title>
 
-  <!-- AR.js + A-Frame -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    body { margin: 0; overflow: hidden; }
-    #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    body { margin:0; overflow:hidden; background:#000; }
+    #loading {
+      position:fixed; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      color:white; font-family:sans-serif;
+    }
   </style>
 </head>
+
 <body>
 
-<div id="loading">Loading AR...</div>
+<div id="loading">📸 Point camera to photo...</div>
 
-<a-scene embedded arjs="trackingMethod: best;">
-  
-  <!-- Marker (dynamic) -->
-  <a-marker preset="custom" id="dynamicMarker">
-    <a-video id="arVideo" src="" width="1" height="0.6" play-on-click="true"></a-video>
-  </a-marker>
-  
-  <a-camera />
+<a-scene
+  mindar-image="imageTargetSrc: targets/targets.mind;"
+  vr-mode-ui="enabled:false"
+  device-orientation-permission-ui="enabled:false"
+>
+  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 </a-scene>
 
 <script>
-  // Get combo ID from URL, default = 1
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id") || "1";
+const scene = document.querySelector("a-scene");
 
-  // Set marker pattern + video paths
-  const markerPath = `assets/combo${id}/marker.patt`;
-  const videoPath  = `assets/combo${id}/video.mp4`;
+fetch("events.json")
+.then(r => r.json())
+.then(events => {
 
-  // Apply to scene
-  const marker = document.querySelector("#dynamicMarker");
-  const video  = document.querySelector("#arVideo");
+  document.getElementById("loading").style.display="none";
 
-  marker.setAttribute("type","pattern");
-  marker.setAttribute("url", markerPath);
+  events.forEach((name, index) => {
 
-  video.setAttribute("src", videoPath);
-  video.setAttribute("crossorigin","anonymous");
+    const entity = document.createElement("a-entity");
+    entity.setAttribute("mindar-image-target", `targetIndex:${index}`);
 
-  // Show scene when ready
-  window.addEventListener("load", () => {
-    document.getElementById("loading").style.display = "none";
+    const video = document.createElement("a-video");
+    video.setAttribute("src", `assets/${name}.mp4`);
+    video.setAttribute("width","1");
+    video.setAttribute("height","0.6");
+    video.setAttribute("muted","");
+    video.setAttribute("playsinline","");
+    video.setAttribute("preload","none");
+
+    entity.addEventListener("targetFound", ()=> video.play());
+    entity.addEventListener("targetLost", ()=> video.pause());
+
+    entity.appendChild(video);
+    scene.appendChild(entity);
   });
+
+});
 </script>
 
 </body>
