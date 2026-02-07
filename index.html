@@ -13,6 +13,26 @@
   <style>
     body { margin:0; overflow:hidden; }
   </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const video = document.getElementById('vid');
+      const scene = document.querySelector('a-scene');
+      
+      // Try to play video when scene is loaded
+      scene.addEventListener('loaded', function() {
+        if (video) {
+          video.play().catch(err => console.log('Autoplay prevented:', err));
+        }
+      });
+      
+      // Play video when target is found
+      document.addEventListener('targetFound', function() {
+        if (video) {
+          video.play().catch(err => console.log('Play failed:', err));
+        }
+      });
+    });
+  </script>
 </head>
 
 <body>
@@ -25,12 +45,12 @@
     <a-assets>
       <video
         id="vid"
-        preload="auto"
-        autoplay
+        preload="metadata"
         loop
         muted
         playsinline
         crossorigin="anonymous"
+        style="display: block;"
       >
         <source src="https://cdn.jsdelivr.net/gh/srkdaniel1997-pixel/ar-photo@main/video.mp4" type="video/mp4">
       </video>
